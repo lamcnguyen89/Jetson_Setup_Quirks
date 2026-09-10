@@ -1,4 +1,4 @@
-The AGX Thor is a pretty new Edge Computing device. And it has some bugs and quirks that you have to fix in order to make it work right.
+The Jetson devices have some bugs and quirks that you have to fix in order to make them work right.
 
 ## CUDA development tools
 
