@@ -20,11 +20,11 @@ read -rp "UCF NID: " UCF_NID
 
 sudo nmcli connection add \
   type wifi \
-  ifname wlan0 \
-  con-name "UCF-WiFi-Jetson" \
+  ifname wlx289401631f06  \
+  con-name "UCF-WiFi-JetsonNX" \
   ssid "UCF_WPA2"
 
-sudo nmcli connection modify "UCF-WiFi-Jetson" \
+sudo nmcli connection modify "UCF-WiFi-JetsonNX" \
   802-11-wireless-security.key-mgmt wpa-eap \
   802-1x.eap peap \
   802-1x.phase2-auth mschapv2 \
@@ -38,7 +38,7 @@ sudo nmcli connection modify "UCF-WiFi-Jetson" \
 Replace `wlan0` if your interface has another name. Connect using:
 
 ```bash
-sudo nmcli --ask connection up "UCF-WiFi-Jetson"
+sudo nmcli --ask connection up "UCF-WiFi-JetsonNX"
 ```
 
 Enter your NID password when prompted. `password-flags 2` tells NetworkManager to request it rather than permanently storing it.
@@ -47,7 +47,7 @@ Verify the connection:
 
 ```bash
 nmcli connection show --active
-ip -br address show wlan0
+ip -br address show wlx289401631f06
 ping -c 3 1.1.1.1
 ```
 
