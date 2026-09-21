@@ -4,27 +4,7 @@ To connect a Luxonis OAK-D Lite camera to ROS 2, you need to configure **USB per
 
 ---
 
-0. **Install DepthAI Package:** I don't think this part is necessary for using the Oak-D lite camera with ROS. This step is just there to make sure your Ubuntu OS can actually access and use the Oak-D Lite Depth Camera
-
-```bash
-
-git clone https://github.com/luxonis/depthai-core.git && cd depthai-core
-python3 -m venv venv
-source venv/bin/activate
-# Installs library and requirements
-python3 examples/python/install_requirements.py
-
-```
-
-Next run the example:
-
-```bash
-cd examples/python
-# Run YoloV6 detection example
-python3 DetectionNetwork/detection_network.py
-# Display all camera streams
-python3 Camera/camera_all.py
-```
+0. **Install DepthAI Package:** Reference this document [Luxonis Camera Installation](Luxonis_Camera_Setup.md).
 
 1. **Configure USB Permissions (udev Rules):** Prerequisite.
 By default, Linux limits raw USB access. Add the Luxonis udev rules so ROS 2 can communicate with the camera without root privileges:
