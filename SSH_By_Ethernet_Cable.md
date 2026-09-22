@@ -16,7 +16,7 @@ ip link
 3. Set up a static IP using NetworkManager (`nmcli`) or GUI settings. For command line:
 
 ```bash
-sudo nmcli con add type ethernet ifname enP2p1s0 con-name DirectEthernet ip4 192.168.1.14/24
+sudo nmcli con add type ethernet ifname enP8p1s0 con-name DirectEthernet ip4 192.168.1.15/24
 sudo nmcli con up DirectEthernet
 
 ```

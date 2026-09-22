@@ -1,220 +1,106 @@
 # How to Install the Netgear AC1200 Wifi USB Driver
 
-Yes. For a Jetson—especially your AGX Thor—the main difference from normal Ubuntu is that you generally **should not install generic Ubuntu kernel headers**. Jetson uses NVIDIA's `-tegra` kernel, so you need NVIDIA's matching headers before compiling the Realtek module. NVIDIA explicitly provides `nvidia-l4t-kernel-headers` for building external modules. ([NVIDIA Docs][1])
+Netgear AC1200 USB Wi-Fi adapters (such as the A6150 or A6210) rely on Realtek chipsets—most commonly the **RTL8812AU** or **RTL8812BU**. Out of the box, Linux (and Jetson Linux/L4T) lacks native kernel drivers for these chips, which is why the dongle won't function immediately upon plugging it in.
 
-### 1. Confirm the adapter and kernel
+To activate the adapter on a Jetson Orin running JetPack (Ubuntu), you need to compile and install DKMS drivers built for arm64 (`aarch64`).
 
-Plug in the RTL8812BU and run:
+---
 
+### Step 1: Identify Your Chipset
+
+Before compiling drivers, verify the vendor and product ID of your USB dongle:
+
+1. Plug the Netgear AC1200 dongle into an available USB port.
+2. Open a terminal and check `lsusb`:
 ```bash
 lsusb
-uname -r
-uname -m
+
 ```
 
-You're looking for something resembling:
 
-```text
-ID 0bda:b812 Realtek Semiconductor Corp.
-```
+3. Look for your Netgear device entry.
+* If the ID contains `0bda:8812` or `0846:9052` / `0846:9053`, it uses the **RTL8812AU** chipset.
+* If the ID contains `0846:9055` or `0bda:b812`, it uses the **RTL8812BU** chipset.
 
-`0bda:b812` is one of the standard RTL8812BU/RTL8822BU IDs. ([GitHub][2])
 
-On your AGX Thor, I would expect something roughly like:
 
-```text
-6.8.12-tegra
-aarch64
-```
+---
 
-### 2. See if the existing kernel driver already works
+### Step 2: Install Build Dependencies & Kernel Headers
 
-Try:
-
-```bash
-sudo modprobe rtw88_8822bu
-```
-
-Then:
-
-```bash
-ip link
-```
-
-and:
-
-```bash
-iw dev
-```
-
-If you suddenly get something such as:
-
-```text
-wlan1
-```
-
-or:
-
-```text
-wlx0013ef......
-```
-
-you may already be done.
-
-You can also check:
-
-```bash
-lsmod | grep rtw
-```
-
-The upstream Linux `rtw88` family supports RTL8812BU/RTL8822BU, though support in older kernels such as 6.8 isn't as mature as it is in newer kernels. The current Realtek driver maintainer specifically recommends the in-kernel `rtw88` implementation on kernel 6.12+. ([GitHub][3])
-
-### 3. If it doesn't work, install the Jetson build dependencies
-
-On Jetson, do:
+Ensure you have build tools, `dkms`, and the correct L4T kernel headers installed.
 
 ```bash
 sudo apt update
-sudo apt install -y \
-    build-essential \
-    dkms \
-    git \
-    iw \
-    rfkill \
-    nvidia-l4t-kernel-headers
+sudo apt install -y build-essential dkms git linux-headers-$(uname -r)
+
 ```
 
-Then verify that the build directory exists:
+---
+
+### Step 3: Clone and Install the Driver
+
+Select the section below corresponding to your chipset ID from Step 1. Both repository maintainers (`morrownr`) provide stable DKMS drivers optimized for Linux kernels used across JetPack versions.
+
+#### Option A: For RTL8812AU Chipsets
 
 ```bash
-ls -l /lib/modules/$(uname -r)/build
+# Clone the out-of-tree RTL8812AU driver repo
+git clone 
+cd 8812au-20210629
+
+# Run the automatic DKMS installer script
+sudo ./install-driver.sh
+
 ```
 
-You want it to point somewhere under `/usr/src/`.
-
-For example:
-
-```text
-/lib/modules/6.8.12-tegra/build -> /usr/src/linux-headers-...
-```
-
-This is important. **Don't blindly use:**
+#### Option B: For RTL8812BU Chipsets
 
 ```bash
-sudo apt install linux-headers-$(uname -r)
-```
-
-on Jetson. Ubuntu's repositories often won't contain headers for NVIDIA's custom `-tegra` kernel. NVIDIA's `nvidia-l4t-kernel-headers` package is intended for precisely this purpose. ([NVIDIA Docs][1])
-
-### 4. Install the RTL8812BU driver
-
-A well-maintained driver for this chipset is `morrownr/88x2bu-20210702`. It explicitly supports **RTL8812BU**, **aarch64/ARM64**, Ubuntu 24.04/kernel 6.8, DKMS, monitor mode, AP mode, and packet injection. ([GitHub][3])
-
-Run:
-
-```bash
-cd ~
+# Clone the out-of-tree RTL8812BU driver repo
 git clone https://github.com/morrownr/88x2bu-20210702.git
-cd 88x2bu-20210702
-```
+cd 8812bu-20210629
 
-Then:
-
-```bash
+# Run the automatic DKMS installer script
 sudo ./install-driver.sh
+
 ```
 
-If it isn't executable:
+*During installation, the script will prompt you whether to enable driver options like concurrent AP/STA or edit configuration flags. Default settings work fine for general Wi-Fi connectivity.*
 
-```bash
-chmod +x install-driver.sh
-sudo ./install-driver.sh
-```
+---
 
-The installer uses DKMS when available, meaning the driver can be rebuilt when your Jetson kernel gets updated. ([GitHub][4])
+### Step 4: Load the Driver Module & Test
 
-Then reboot:
-
+1. Reboot your Jetson Orin to load the newly compiled module:
 ```bash
 sudo reboot
+
 ```
 
-### 5. Verify after reboot
 
-Run:
-
+2. Once rebooted, verify that the module is active:
 ```bash
-lsmod | grep 88x2bu
+lsmod | grep 8812
+
 ```
 
-You should see something similar to:
 
-```text
-88x2bu
-```
-
-Then:
-
+3. Check if the wireless interface is created:
 ```bash
-iw dev
+ip a
+
 ```
 
-and:
 
+*(You should see a `wlan0` or `wlan1` interface).*
+4. You can now connect to Wi-Fi networks using `nmcli` or the Ubuntu desktop network GUI:
 ```bash
-nmcli device
+sudo nmcli device wifi list
+sudo nmcli device wifi connect "YOUR_SSID" password "YOUR_PASSWORD"
+
 ```
 
-You should have an additional Wi-Fi interface, for example:
 
-```text
-DEVICE            TYPE      STATE
-wlP1p1s0          wifi      connected
-wlx1cbfce64a99c   wifi      disconnected
-```
 
-You can scan with:
-
-```bash
-nmcli dev wifi list
-```
-
-### 6. One Jetson-specific check if compilation fails
-
-If `install-driver.sh` gives an error involving:
-
-```text
-/lib/modules/6.8.12-tegra/build
-```
-
-or:
-
-```text
-No such file or directory
-```
-
-run these and send me the output:
-
-```bash
-uname -a
-dpkg -l | grep nvidia-l4t-kernel
-ls -l /lib/modules/$(uname -r)/
-ls -l /usr/src/
-```
-
-That would almost certainly indicate a **Jetson kernel/header mismatch**, rather than a problem with the RTL8812BU itself.
-
-Also send me:
-
-```bash
-lsusb
-```
-
-because I can verify the exact USB vendor/device ID against the driver's supported list. There are quite a few RTL8812BU adapters sold under different brands and USB IDs. ([GitHub][2])
-
-For your likely **AGX Thor + Ubuntu 24.04 + 6.8.x-tegra** configuration, I'd use the `88x2bu` DKMS approach above rather than fighting the older in-kernel `rtw88` implementation. Once NVIDIA eventually moves that Jetson to a sufficiently recent kernel (6.12+), I'd switch back to the standard in-kernel `rtw88` driver. ([GitHub][3])
-
-[1]: https://docs.nvidia.com/jetson/archives/r38.4/DeveloperGuide/SD/SoftwarePackagesAndTheUpdateMechanism.html?utm_source=chatgpt.com "Software Packages and the Update Mechanism — NVIDIA Jetson Linux Developer Guide"
-[2]: https://github.com/morrownr/88x2bu-20210702/blob/main/supported-device-IDs?utm_source=chatgpt.com "88x2bu-20210702/supported-device-IDs at main · morrownr/88x2bu-20210702 · GitHub"
-[3]: https://github.com/morrownr/88x2bu-20210702?utm_source=chatgpt.com "GitHub - morrownr/88x2bu-20210702: Linux Driver for USB WiFi Adapters that are based on the RTL8812BU and RTL8822BU Chipsets - v5.13.1 · GitHub"
-[4]: https://github.com/morrownr/88x2bu-20210702/blob/main/install-driver.sh?utm_source=chatgpt.com "88x2bu-20210702/install-driver.sh at main · morrownr/88x2bu-20210702 · GitHub"
+---

@@ -56,7 +56,7 @@ At the end it prints a summary with quick verification commands.
 ## Verifying the install
 
 ```bash
-systemctl status jtop.service --no-pager
+ 
 journalctl -u jtop --no-pager -e
 ```
 
