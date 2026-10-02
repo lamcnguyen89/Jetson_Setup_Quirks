@@ -21,8 +21,8 @@ Depending on the JetPack/Ubuntu version running on your Jetson, Python's PEP 668
 Use the `--break-system-packages` flag to allow system-wide PIP modifications:
 
 ```bash
-sudo python3 -m pip install PyYAML pymavlink mavproxy --break-system-packages
-sudo /usr/bin/python3 -m pip install future --break-system-packages
+sudo python3 -m pip install PyYAML pymavlink mavproxy
+sudo /usr/bin/python3 -m pip install future 
 
 ```
 

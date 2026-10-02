@@ -8,7 +8,7 @@ The following table is intended as a printable quick reference to commonly used 
 
 | Command | Description |
 | :--- | :--- |
-| `sudo mavproxy.py --master=/dev/ttyTHS1` | Establish connection between Jetson and Pixhawk |
+| `sudo mavproxy.py --master=/dev/ttyTHS1 --baud=57600` | Establish connection between Jetson and Pixhawk |
 | `rc N PWM` | Set RC channel N override to PWM (PWM = 0 disables override) |
 | `link list` | List all links |
 | `link set N` | Set link N to primary |
