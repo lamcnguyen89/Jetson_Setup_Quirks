@@ -1,73 +1,63 @@
-To dual boot Raspberry Pi OS from a micro SD card and Batocera from an NVMe drive on a Raspberry Pi 5, the cleanest approach is to let the Pi's hardware bootloader handle target selection based on **device detection priority** using the NVMe Base/HAT and the Pi 5 EEPROM settings.
+The issue depends on which host OS you are plugged into. Batocera formats its main storage partition (`SHARE`) as **ext4** or **BTRFS** by default, which Windows cannot write to natively, and Linux hosts mount with strict root ownership.
+
+Here is how to resolve it based on your setup:
 
 ---
 
-## Prerequisites & EEPROM Setup
+### Method 1: If You are on Windows or macOS
 
-Ensure your Raspberry Pi 5 EEPROM is updated to support NVMe boot and configured with the correct boot order.
+Windows cannot natively write to Linux file systems (ext4/BTRFS) and will either prompt to format or block writes.
 
-1. **Boot into Pi OS on the SD Card.**
-2. Open a terminal and run the configuration tool:
+1. **Use WSL2 or a Third-Party Driver (Windows):**
+* Install **Paragon Linux File Systems for Windows** or **BTRFS for Windows** (depending on the filesystem used on the `SHARE` partition).
+
+
+2. **Best Alternative (Network Transfer):**
+* Boot the NVMe drive in its target system/console.
+* Connect it to your local network via Ethernet or Wi-Fi.
+* Open Windows File Explorer or macOS Finder and navigate to `\\BATOCERA` (or `smb://batocera.local`).
+* Drag and drop your ROMs directly into the `roms` subdirectories.
+
+
+
+---
+
+### Method 2: If You are on Linux (Ubuntu/Debian)
+
+When plugging an external ext4/BTRFS drive into Linux, the files are owned by `root`, preventing regular user writes.
+
+#### Option A: Change Ownership of the Mounted Partition
+
+Find where your system mounted the drive (usually under `/media/$USER/SHARE` or `/run/media/$USER/SHARE`) and take ownership:
+
 ```bash
-sudo raspi-config
+# Identify where the partition is mounted
+df -h | grep -i share
+
+# Fix ownership so your user account can write freely
+sudo chown -R $USER:$USER /path/to/mounted/SHARE
 
 ```
 
+#### Option B: Remount as Read-Write
 
-3. Navigate to **Advanced Options** → **Boot Order** → Select **NVMe/USB Boot**.
-4. Alternatively, edit the EEPROM config directly:
+If the filesystem dirty flag was set or mounted read-only due to an unclean unmount:
+
 ```bash
-sudo rpi-eeprom-config --edit
+# Check block devices to find the partition (e.g., /dev/nvme0n1p2 or /dev/sdb2)
+lsblk
+
+# Remount with explicit read-write permissions
+sudo mount -o remount,rw /dev/sdX2 /path/to/mounted/SHARE
 
 ```
 
-
-Ensure the `BOOT_ORDER` variable includes both `1` (microSD) and `6` (NVMe):
-```text
-BOOT_ORDER=0xf416
-
-```
-
-
-* *`6` corresponds to NVMe, and `1` corresponds to microSD. Execution runs right-to-left (`6` first, then `1`).*
-
-
-
 ---
 
-## Dual-Boot Behavior
+### Method 3: Transferring Directly on the Batocera System
 
-Because of how the Pi 5 bootloader processes `BOOT_ORDER`:
+If you boot into Batocera with the NVMe inside the device, you can use Batocera's built-in file manager:
 
-### Mode A: Automatic Switching (Physical Media Insertion)
-
-* **Boot Batocera (NVMe):** Power on the Pi with the NVMe attached and the SD card **removed** (or keep NVMe prioritized as `6`).
-* **Boot Pi OS (SD Card):** If `BOOT_ORDER=0xf614` is set instead, the Pi looks for a microSD card first. Inserting the SD card boots Raspberry Pi OS; removing it forces the Pi to failover to the NVMe drive to boot Batocera.
-
----
-
-### Mode B: On-Screen Boot Menu (PINN / NOOBS Style)
-
-If you want an on-screen menu at startup without physically removing the SD card:
-
-1. Flash **PINN** (an expanded version of NOOBS designed for Raspberry Pi) to your microSD card.
-2. Boot into PINN with the NVMe drive connected via PCIe.
-3. Use the PINN installer to target and install:
-* **Raspberry Pi OS** onto the **microSD card** (`/dev/mmcblk0`).
-* **Batocera** onto the **NVMe drive** (`/dev/nvme0n1`).
-
-
-4. At every power-on, PINN displays an interactive menu to choose between OS options before loading the respective kernel.
-
----
-
-## PCIe Gen 3 Speed Optimization
-
-By default, the Pi 5 runs PCIe at Gen 2 speeds. To enable full NVMe performance for Batocera and Pi OS:
-
-Add the following line to `config.txt` on the boot partition of both drives:
-
-```ini
-dtparam=pciex1_no_max_speed=1
-
-```
+1. Press **F1** on a connected keyboard while in the Batocera main menu to launch PCManFM (the built-in file manager).
+2. Use the left sidebar to access local drives or external USB storage containing your ROMs.
+3. Drag and drop the game files directly into `/userdata/roms/`.
