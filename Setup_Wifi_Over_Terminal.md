@@ -54,11 +54,11 @@ ping -c 3 1.1.1.1
 If authentication fails specifically because of certificate validation, UCF’s general setup page currently tells clients to choose “Don’t validate.” You can reproduce that with:
 
 ```bash
-sudo nmcli connection modify "UCF-WiFi-Jetson" \
+sudo nmcli connection modify "UCF-WiFi-JetsonNX" \
   802-1x.system-ca-certs no \
   802-1x.ca-cert ""
 
-sudo nmcli --ask connection up "UCF-WiFi-Jetson"
+sudo nmcli --ask connection up "UCF-WiFi-JetsonNX"
 ```
 
 That fallback is less secure, so try the system certificate configuration first. UCF confirms that `UCF_WPA2` requires your NID and NID password. [UCF Wi‑Fi guidance](https://ucfsandbox.service-now.com/kb/en?id=kb_article_view&sysparm_article=KB0010286)
