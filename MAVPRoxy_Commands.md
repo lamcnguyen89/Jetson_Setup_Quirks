@@ -4,12 +4,15 @@
 
 ## MAVProxy Cheatsheet
 
-The following table is intended as a printable quick reference to commonly used MAVProxy commands.
 
 | Command | Description |
 | :--- | :--- |
-| `sudo mavproxy.py --master=/dev/ttyTHS1 --baud=57600` | Establish connection between Jetson and Pixhawk |
+| `sudo mavproxy.py --master=/dev/ttyTHS1 --baudrate=57600` | Connect Jetson UART to Pixhawk telemetry port |
+| `sudo mavproxy.py --master=/dev/ttyACM0 --baudrate=115200 --show-errors` | Test direct USB connection to Pixhawk; adjust device path as needed |
 | `rc N PWM` | Set RC channel N override to PWM (PWM = 0 disables override) |
+| `watch HEARTBEAT` | Print each heartbeat message as it arrives from the Pixhawk (confirms the link is alive) |
+| `watch off` | Stop watching messages |
+| `status HEARTBEAT` | Show the latest received HEARTBEAT message |
 | `link list` | List all links |
 | `link set N` | Set link N to primary |
 | `link add X` | Add new link |
@@ -36,3 +39,4 @@ The following table is intended as a printable quick reference to commonly used 
 | `servo set N PWM` | Override servo N to PWM value |
 | `terrain check LAT LON` | Get terrain height at specified location |
 | `formatsdcard` | Formats SD card |
+| `watch HEARTBEAT` | Hearbeat message should print about 1hz. Purpose is to verify connection between companion computer and Flight Controller |
