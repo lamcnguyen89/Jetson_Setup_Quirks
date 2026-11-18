@@ -7,7 +7,7 @@
 
 | Command | Description |
 | :--- | :--- |
-| `sudo mavproxy.py --master=/dev/ttyTHS1 --baudrate=57600` | Connect Jetson UART to Pixhawk telemetry port |
+| `sudo mavproxy.py --master=/dev/ttyTHS1 --baudrate=57600 --show-errors` | Connect Jetson UART to Pixhawk telemetry port |
 | `sudo mavproxy.py --master=/dev/ttyACM0 --baudrate=115200 --show-errors` | Test direct USB connection to Pixhawk; adjust device path as needed |
 | `rc N PWM` | Set RC channel N override to PWM (PWM = 0 disables override) |
 | `watch HEARTBEAT` | Print each heartbeat message as it arrives from the Pixhawk (confirms the link is alive) |
